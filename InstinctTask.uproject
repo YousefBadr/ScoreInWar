@@ -1,0 +1,17 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{5FE71B89-4639-AC7F-8C81-47B4C498BDAD}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "InstinctTask",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"AIModule"
+			]
+		}
+	]
+}

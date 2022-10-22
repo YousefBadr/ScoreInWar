@@ -1,0 +1,11 @@
+Grid Size
+2 2
+Number Of Turrets
+4
+Turrets Location
+1 1
+1 2
+2 1
+2 2
+Projectile Speed
+900
