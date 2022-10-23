@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/StaticMeshActor.h"
 
+
 void UGameInstanceCPP::Init()
 {
 	Super::Init();
@@ -27,80 +28,10 @@ void UGameInstanceCPP::Init()
 
 	SetVariablesFromFile();
 
-	TotalLandSize = (GridSizeX * 1000.0f) + (GridSizeX * 1000.0f);
-	//Spawn Grid Tiles
-	if (UnitPlane)
-	{
-		FVector Location(1000.0f, 1000.0f, 0.0f);
-		
-		//Next ground plane location.
-		int NextLocationAddition = 1000;
-
-		//Next wall plane location.
-		int NextLocationForTheWalls = 500;
-
-		for (int i = 0; i < GridSizeX; i++)
-		{
-			//Spawn Horizontal Planes
-			for (int j = 0; j < GridSizeY; j++)
-			{
-				//Check if at the first row or last row to apply WALLS. so the player doesn't fall off. (only falls by powerful hit)
-				if (i == 0 || i== GridSizeX-1)
-				{
-					int temp = NextLocationForTheWalls;
-					//spawn walls special cases. if we reach the end.
-					if (i == GridSizeX - 1 && GridSizeX%2!=0 )
-						temp = -1 * NextLocationForTheWalls;
-					SpawnPlaneAtLocation(FVector(Location.X-temp, Location.Y, Location.Z), FRotator(90.0f, 180.0f, 180.0f), FVector(3.0f, 10.0f, 3.0f));
-					// if the size of GridX is 1 only, then we spawn another last Wall at the top.
-					if (GridSizeX == 1)
-					{
-						SpawnPlaneAtLocation(FVector(Location.X + temp, Location.Y, Location.Z), FRotator(90.0f, 180.0f, 180.0f), FVector(3.0f, 10.0f, 3.0f));
-					}
-				}
-				//Spawning Ground Planes.
-				UE_LOG(LogTemp, Warning, TEXT("Location = %s"), *Location.ToString());
-				SpawnPlaneAtLocation(Location, FRotator (0.0f, 0.0f, 0.0f), FVector(10.0f, 10.0f, 10.0f));
-
-				//Check if at the first column or last column to apply WALLS. so the player doesn't fall off. (only falls by powerful hit)
-				if (j == GridSizeY - 1 || j == 0)
-				{
-					int temp = NextLocationForTheWalls;
-					//If at the first column spwan walls on the left.
-					if (j == 0) 
-						temp = -1 * NextLocationForTheWalls;
-					SpawnPlaneAtLocation(FVector(Location.X, Location.Y + temp, Location.Z), FRotator(-90.0f, 0.0f, 90.0f), FVector(3.0f,10.0f,3.0f));
-					
-					// if the size of GridY is 1 only, then we spawn another last Wall at the top.
-					if (GridSizeY == 1)
-					{
-						SpawnPlaneAtLocation(FVector(Location.X, Location.Y - temp, Location.Z), FRotator(-90.0f, 0.0f, 90.0f), FVector(3.0f, 10.0f, 3.0f));
-					}
-				}
-				//GoTo the next Y Tile in order if it's not the last tile.
-				if(j != GridSizeY - 1)
-				{
-					Location.Y = Location.Y + NextLocationAddition;
-				}
-
-			}
-			//GoTo the next X Tile in order if it's not the last tile.
-			Location.X = Location.X + 1000;
-
-			//Switch the walls and planes direction
-			NextLocationAddition = -1*NextLocationAddition;
-			NextLocationForTheWalls = -1* NextLocationForTheWalls;
-
-		}
-	}
-
-
-	//Spawn Enemy Turrets
-	SpawnEnemyTurrets();
-
 	//Set Pawn Location
 	PawnSetLocation = FVector (((GridSizeX * 1000) / 2)+700, ((GridSizeY * 1000) / 2) + 700, 130);
 
+	LastPlaneSpawnTime = FPlatformTime::Seconds() + 1;//////////////////
 	//Tick is added to handle spawning coines.
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UGameInstanceCPP::MyTick));
 }
@@ -118,9 +49,105 @@ bool UGameInstanceCPP::MyTick(float DeltaSeconds)
 			UE_LOG(LogTemp, Warning, TEXT("LastTimeSpawningCoins = %f"), LastTimeSpawningCoins);
 		}
 	}
+
+	//Spawning Here To Work In a packaged game. (To be refactored latter)
+	if (FPlatformTime::Seconds() - LastPlaneSpawnTime >= 0)
+	{
+		if (!alltilesspawned)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Entered ! About To Spawn Planes!! = %f"));
+			alltilesspawned = true;
+
+			SpawnAllTiles();
+
+			//Spawn Enemy Turrets
+			SpawnEnemyTurrets();
+			AllIsDoneAndSet();
+			AllPlanesAndTureetsAreSet = true;
+		}
+	}
+	
 	return true;
 }
 
+void UGameInstanceCPP::SpawnAllTiles()
+{
+	TotalLandSize = (GridSizeX * 1000.0f) + (GridSizeX * 1000.0f);
+
+	//Spawn Grid Tiles
+	if (UnitPlane)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnitPlane Is Not Null!"));
+
+		FVector Location(1000.0f, 1000.0f, 0.0f);
+
+		//Next ground plane location.
+		int NextLocationAddition = 1000;
+
+		//Next wall plane location.
+		int NextLocationForTheWalls = 500;
+
+		for (int i = 0; i < GridSizeX; i++)
+		{
+			//Spawn Horizontal Planes
+			for (int j = 0; j < GridSizeY; j++)
+			{
+				//Check if at the first row or last row to apply WALLS. so the player doesn't fall off. (only falls by powerful hit)
+				if (i == 0 || i == GridSizeX - 1)
+				{
+					int temp = NextLocationForTheWalls;
+					//spawn walls special cases. if we reach the end.
+					if (i == GridSizeX - 1 && GridSizeX % 2 != 0)
+						temp = -1 * NextLocationForTheWalls;
+					SpawnPlaneAtLocation(FVector(Location.X - temp, Location.Y, Location.Z), FRotator(90.0f, 180.0f, 180.0f), FVector(3.0f, 10.0f, 3.0f));
+					// if the size of GridX is 1 only, then we spawn another last Wall at the top.
+					if (GridSizeX == 1)
+					{
+						SpawnPlaneAtLocation(FVector(Location.X + temp, Location.Y, Location.Z), FRotator(90.0f, 180.0f, 180.0f), FVector(3.0f, 10.0f, 3.0f));
+					}
+				}
+				//Spawning Ground Planes.
+				UE_LOG(LogTemp, Warning, TEXT("Location = %s"), *Location.ToString());
+				SpawnPlaneAtLocation(Location, FRotator(0.0f, 0.0f, 0.0f), FVector(10.0f, 10.0f, 10.0f));
+
+				//Check if at the first column or last column to apply WALLS. so the player doesn't fall off. (only falls by powerful hit)
+				if (j == GridSizeY - 1 || j == 0)
+				{
+					int temp = NextLocationForTheWalls;
+					//If at the first column spwan walls on the left.
+					if (j == 0)
+						temp = -1 * NextLocationForTheWalls;
+					SpawnPlaneAtLocation(FVector(Location.X, Location.Y + temp, Location.Z), FRotator(-90.0f, 0.0f, 90.0f), FVector(3.0f, 10.0f, 3.0f));
+
+					// if the size of GridY is 1 only, then we spawn another last Wall at the top.
+					if (GridSizeY == 1)
+					{
+						SpawnPlaneAtLocation(FVector(Location.X, Location.Y - temp, Location.Z), FRotator(-90.0f, 0.0f, 90.0f), FVector(3.0f, 10.0f, 3.0f));
+					}
+				}
+				//GoTo the next Y Tile in order if it's not the last tile.
+				if (j != GridSizeY - 1)
+				{
+					Location.Y = Location.Y + NextLocationAddition;
+				}
+
+			}
+			//GoTo the next X Tile in order if it's not the last tile.
+			Location.X = Location.X + 1000;
+
+			//Switch the walls and planes direction
+			NextLocationAddition = -1 * NextLocationAddition;
+			NextLocationForTheWalls = -1 * NextLocationForTheWalls;
+
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UnitPlane Is Null!"));
+	}
+
+
+}
 void UGameInstanceCPP::SpawnCoins()
 {
 	if (!CoinBluePrint)return;
@@ -159,7 +186,7 @@ void UGameInstanceCPP::SpawnEnemyTurrets()
 		FActorSpawnParameters MyActorSpawnParameters;
 		MyActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
 
-		GetWorld()->SpawnActor(TurretBluePrint,&NewLocation,&NewRotation, MyActorSpawnParameters);
+		auto Turret = GetWorld()->SpawnActor(TurretBluePrint,&NewLocation,&NewRotation, MyActorSpawnParameters);
 	}
 
 }
@@ -176,6 +203,7 @@ void UGameInstanceCPP::SetVariablesFromFile()
 			FileContentStringArray[i].Split(TEXT(" "), &StringGridX, &StringGridY);
 			GridSizeX = FCString::Strtoui64(*StringGridX, NULL, 10);
 			GridSizeY = FCString::Strtoui64(*StringGridY, NULL, 10);
+			//if (GridSizeX == 3)FGenericPlatformMisc::RequestExit(false);
 			UE_LOG(LogTemp, Warning, TEXT("GridSizeX = %d,GridSizeY = %d"), GridSizeX, GridSizeY);
 		}
 		else if (FileContentStringArray[i].Equals("Number Of Turrets"))
@@ -220,7 +248,7 @@ bool UGameInstanceCPP::SpawnPlaneAtLocation(FVector Location, FRotator Rotation,
 {
 	FActorSpawnParameters SpawnInfo;
 	AStaticMeshActor* MyNewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass());
-	MyNewActor->SetMobility(EComponentMobility::Stationary);
+	MyNewActor->SetMobility(EComponentMobility::Movable);
 	MyNewActor->SetActorLocation(Location);
 	MyNewActor->SetActorRotation(Rotation);
 	MyNewActor->SetActorScale3D(Scale);
@@ -230,6 +258,33 @@ bool UGameInstanceCPP::SpawnPlaneAtLocation(FVector Location, FRotator Rotation,
 		MeshComponent->SetStaticMesh(UnitPlane);
 	}
 	return true;
+
+	//AStaticMeshActor* MyNewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass());
+	//MyNewActor->SetMobility(EComponentMobility::Movable);
+	//MyNewActor->SetActorLocation(Location);
+	//MyNewActor->SetActorRotation(Rotation);
+	//MyNewActor->SetActorScale3D(Scale);
+
+	//UStaticMeshComponent* MeshComponent = MyNewActor->GetStaticMeshComponent();
+	//if (MeshComponent)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("MeshComponent Is Not Null!"));
+	//	bool LastCheck = MeshComponent->SetStaticMesh(UnitPlane);
+	//	if (LastCheck)
+	//	{
+	//		UE_LOG(LogTemp, Warning, TEXT("MeshComponent->SetStaticMesh(UnitPlane) Has Succedded!!"));
+	//	}
+	//	else
+	//	{
+	//		UE_LOG(LogTemp, Warning, TEXT("MeshComponent->SetStaticMesh(UnitPlane) Has Failed!!"));
+
+	//	}
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("MeshComponent Is Null!"));
+	//}
+	//return true;
 }
 
 bool UGameInstanceCPP::LoadStringArrayFromFile(TArray<FString>& StringArray, int32& ArraySize, FString FullFilePath, bool ExcludeEmptyLines)

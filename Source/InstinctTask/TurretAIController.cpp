@@ -14,6 +14,8 @@
 void ATurretAIController::BeginPlay()
 {
     Super::BeginPlay();
+    UE_LOG(LogTemp, Warning, TEXT("ATurretAIController::BeginPlay"));
+
 }
 
 void ATurretAIController::Tick(float DeltaTime)
