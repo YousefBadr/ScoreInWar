@@ -260,11 +260,13 @@ void AInstinctTaskGameMode::SetVariablesFromFile()
 bool AInstinctTaskGameMode::SpawnPlaneAtLocation(FVector Location, FRotator Rotation, FVector Scale)
 {
 	FActorSpawnParameters SpawnInfo;
-	AStaticMeshActor* MyNewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass());
-	MyNewActor->SetMobility(EComponentMobility::Movable);
-	MyNewActor->SetActorLocation(Location);
-	MyNewActor->SetActorRotation(Rotation);
-	MyNewActor->SetActorScale3D(Scale);
+	FTransform PlaneTransform;
+	PlaneTransform.SetLocation(Location);
+	PlaneTransform.SetRotation((FQuat)Rotation);
+	PlaneTransform.SetScale3D(Scale);
+	AStaticMeshActor* MyNewActor = GetWorld()->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), PlaneTransform);
+	MyNewActor->SetMobility(EComponentMobility::Stationary);
+
 	UStaticMeshComponent* MeshComponent = MyNewActor->GetStaticMeshComponent();
 	if (MeshComponent)
 	{
