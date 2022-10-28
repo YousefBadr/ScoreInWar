@@ -172,9 +172,9 @@ void AInstinctTaskGameMode::SpawnCoins()
 
 	for (int i = 0; i <= TotalNumberOfCoins; i++)
 	{
-		//Just move location by 30 so it doesn't spawn on walls
-		int32 PositionX = FMath::RandRange(530, (GridSizeX * 1000) - 30);
-		int32 PositionY = FMath::RandRange(530, (GridSizeY * 1000) - 30);
+		//Spawn Coins Within Grid Range
+		int32 PositionX = FMath::RandRange(530, (GridSizeX * 1000) + 470);
+		int32 PositionY = FMath::RandRange(530, (GridSizeY * 1000) + 470);
 
 		FActorSpawnParameters MyActorSpawnParameters;
 		MyActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
