@@ -11,7 +11,8 @@
 
 #include "Projectile.h"
 #include "Kismet/GameplayStaticsTypes.h"
-#include "GameInstanceCPP.h"
+#include "InstinctTaskGameMode.h"
+
 
 // Sets default values for this component's properties
 UTurretAimingComponent::UTurretAimingComponent()
@@ -50,15 +51,16 @@ void UTurretAimingComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 void UTurretAimingComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentGameInstance = Cast<UGameInstanceCPP>(UGameplayStatics::GetGameInstance(GetWorld()));
+	CurrentGameMode = Cast<AInstinctTaskGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	
 	//So that first fire is after initial reload
 	LastFireTime = FPlatformTime::Seconds();
 	PlayerBall = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 void UTurretAimingComponent::Fire()
 {
-	if (!CurrentGameInstance) return;
-	if (CurrentGameInstance->RemoveWelcomeWidget == false) return;
+	if (!CurrentGameMode) return;
+	if (CurrentGameMode->IsGameInitialized == false) return;
 
 	if (FiringState != EFiringState::Reloading)
 	{
@@ -96,13 +98,13 @@ void UTurretAimingComponent::AimAt(FVector HitLocation)
 	FVector OutLaunchVelocity;
 	FVector StartLocation = Barrel->GetSocketLocation(FName("Projectile"));
 
-	if (!CurrentGameInstance)
+	if (!CurrentGameMode)
 	{
-		CurrentGameInstance = Cast<UGameInstanceCPP>(UGameplayStatics::GetGameInstance(GetWorld()));
+		CurrentGameMode = Cast<AInstinctTaskGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		return;
 	}
 
-	LaunchSpeed = CurrentGameInstance->ProjectileSpeed;
+	LaunchSpeed = CurrentGameMode->ProjectileSpeed;
 
 
 	//UE_LOG(LogTemp, Warning, TEXT("LaunchSpeed = %f"), LaunchSpeed);
@@ -121,12 +123,7 @@ void UTurretAimingComponent::AimAt(FVector HitLocation)
 	if (bHaveAimSolution)
 	{
 		AimDirection = OutLaunchVelocity.GetSafeNormal();
-		//auto OurTankName=GetOwner()->GetName(); 
-		//auto Time=GetWorld()->GetTimeSeconds();
-		//UE_LOG(LogTemp,Warning,TEXT("%s aiming at %s aim solution found"),*OurTankName,*HitLocation.ToString())
 		MoveBarrelAndTurretTowards(AimDirection);
-		//GEngine->AddOnScreenDebugMessage(0, 1, FColor::Green, FString::Printf(TEXT("Found Solution Launch = %s"), *OutLaunchVelocity.ToString()));
-
 	}
 	else
 	{

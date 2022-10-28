@@ -8,7 +8,7 @@
 #include "TurretAimingComponent.generated.h"
 
 class AProjectile;
-class UGameInstanceCPP;
+class AInstinctTaskGameMode;
 
 //Enum for aiming state
 UENUM()
@@ -63,7 +63,7 @@ private:
 	void MoveBarrelAndTurretTowards(FVector AimDirection);
 
 	APawn* PlayerBall = nullptr;
-	UGameInstanceCPP* CurrentGameInstance = nullptr;
+	AInstinctTaskGameMode* CurrentGameMode = nullptr;
 	UStaticMeshComponent* Barrel = nullptr;
 	UStaticMeshComponent* Turret = nullptr;
 

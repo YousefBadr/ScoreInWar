@@ -43,7 +43,7 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite , Category = Ball)
 	float StartHealth = 100.0f;
 
-	//current playeer score
+	//current player score
 	UPROPERTY(BlueprintReadWrite, Category = "Score")
 	float CurrentScore = 0.0f;
 
